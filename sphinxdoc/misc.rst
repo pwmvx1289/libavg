@@ -352,6 +352,12 @@ Misc. Classes
 
         .. py:attribute:: y
 
+        .. py:classmethod:: angle(p1, p2) -> float
+
+            Returns the angle between the two vectors :py:attr:`p1` and :py:attr:`p2`
+            in the range 0 and 2*pi, with 0 being the positive x axis. Angles run
+            clockwise.
+
         .. py:method:: getAngle() -> float
 
             Returns the direction of the vector as an angle between pi and -pi, with
@@ -369,7 +375,7 @@ Misc. Classes
         .. py:method:: getRotated(angle) -> Point2D
 
             Return the position of point rotated around the origin.
-    
+
         .. py:method:: getRotated(angle, pivot) -> Point2D
 
             Return the position of point rotated around :py:attr:`pivot`.
@@ -379,6 +385,13 @@ Misc. Classes
             Converts polar to cartesian coordinates. :py:attr:`angle` is in radians with 0
             being the positive x axis. Angle is clockwise (assuming that y points
             downward).
+
+        .. py:method isInPolygon(poly) -> bool
+
+            Checks if the point is inside a polygon.
+
+            :param poly: List of points which constitute a polygon to check against.
+            :returns: :py:const:`True` if point is inside, :py:const:`False` otherwise.
 
 
     .. autoclass:: SVG(filename, [unescapeIllustratorIDs=False])
@@ -534,21 +547,6 @@ Misc. Classes
             asynchronous to normal playback. If you need to immediately re-open the
             video file (e.g. for playback in a video node), destroy the python object 
             first. This waits for sync.
-
-    .. autofunction:: getMemoryUsage() -> int
-
-        Returns the amount of memory used by the application in bytes. More
-        precisely, this function returns the resident set size of the process
-        in bytes. This does not include shared libraries or memory paged out to
-        disk.
-
-    .. autofunction:: pointInPolygon(point, poly) -> bool
-
-        Checks if a point is inside a polygon.
-
-        :param Point2D point: Point to check.
-        :param poly: List of points which constitute a polygon to check against.
-        :returns: :py:const:`True` if point is inside, :py:const:`False` otherwise.
 
     .. autofunction:: validateXml(xmlString, schemaString, xmlName, schemaName)
 

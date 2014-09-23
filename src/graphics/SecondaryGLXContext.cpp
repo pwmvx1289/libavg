@@ -42,38 +42,33 @@ using namespace boost;
 
 SecondaryGLXContext::SecondaryGLXContext(const GLConfig& glConfig, const string& sDisplay,
         const IntRect& windowDimensions, bool bHasWindowFrame)
-    : GLXContext(windowDimensions.size())
+    : GLXContext(windowDimensions.size()),
+      m_Window(-1)
 {
     GLConfig config = glConfig;
-    try {
-        createContext(config, sDisplay, windowDimensions, bHasWindowFrame, true);
-    } catch (const Exception &e) {
-        if (e.getCode() == AVG_ERR_DEBUG_CONTEXT_FAILED) {
-            createContext(config, sDisplay, windowDimensions, bHasWindowFrame, false);
-        } else {
-            AVG_TRACE(Logger::category::NONE, Logger::severity::ERROR, 
-                    "Failed to create GLX context: " << e.what());
-        }
-    }
+    createContext(config, sDisplay, windowDimensions, bHasWindowFrame);
     init(config, true);
 }
 
 SecondaryGLXContext::~SecondaryGLXContext()
 {
-    XDestroyWindow(getDisplay(), m_Window);
+    if (m_Window != (::Window)-1) {
+        XDestroyWindow(getDisplay(), m_Window);
+    }
 }
 
 void SecondaryGLXContext::createContext(GLConfig& glConfig, const string& sDisplay, 
-        const IntRect& windowDimensions, bool bHasWindowFrame, bool bUseDebugBit)
+        const IntRect& windowDimensions, bool bHasWindowFrame)
 {
     setX11ErrorHandler();
 
     ::Display* pDisplay = XOpenDisplay(sDisplay.c_str());
     if (!pDisplay) {
+        resetX11ErrorHandler();
         throw Exception(AVG_ERR_OUT_OF_RANGE, 
                 "Display '" + sDisplay + "' is not available.");
     }
-    XVisualInfo* pVisualInfo = createDetachedContext(pDisplay, glConfig, bUseDebugBit);
+    XVisualInfo* pVisualInfo = createDetachedContext(pDisplay, glConfig);
     
     XSetWindowAttributes swa;
     swa.event_mask = ButtonPressMask;

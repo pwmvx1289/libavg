@@ -33,6 +33,7 @@
 #include "../base/ObjectCounter.h"
 
 #include "../graphics/Filterfliprgb.h"
+#include "../graphics/MCTexture.h"
 
 #include <iostream>
 #include <sstream>
@@ -154,19 +155,14 @@ void ImageNode::preRender(const VertexArrayPtr& pVA, bool bIsParentActive,
 {
     ScopeTimer timer(PrerenderProfilingZone);
     Node::preRender(pVA, bIsParentActive, parentEffectiveOpacity);
-    if (isVisible()) {
-        if (m_pImage->getSource() != Image::NONE) {
-            getCanvas()->scheduleFXRender(
-                    dynamic_pointer_cast<RasterNode>(shared_from_this()));
+    if (isVisible() && m_pImage->getSource() != Image::NONE) {
+        if (m_pImage->getCanvas()) {
+            // Force FX render every frame for canvas nodes.
+            getSurface()->getTex(0)->setDirty();
         }
+        scheduleFXRender();
     }
     calcVertexArray(pVA);
-}
-
-void ImageNode::renderFX()
-{
-    bool bHasCanvas = bool(m_pImage->getCanvas());
-    RasterNode::renderFX(getSize(), Pixel32(255, 255, 255, 255), bHasCanvas, bHasCanvas);
 }
 
 static ProfilingZoneID RenderProfilingZone("ImageNode::render");
@@ -175,8 +171,7 @@ void ImageNode::render()
 {
     ScopeTimer Timer(RenderProfilingZone);
     if (m_pImage->getSource() != Image::NONE) {
-        blt32(getTransform(), getSize(), getEffectiveOpacity(), getBlendMode(), 
-                bool(m_pImage->getCanvas()));
+        blt32();
     }
 }
 

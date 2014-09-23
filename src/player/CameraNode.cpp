@@ -76,7 +76,7 @@ void CameraNode::registerType()
 CameraNode::CameraNode(const ArgList& args)
     : m_bIsPlaying(false),
       m_FrameNum(0),
-      m_bIsAutoUpdateCameraImage(true),
+      m_bAutoUpdateCameraImage(true),
       m_bNewBmp(false),
       m_bNewSurface(false)
 {
@@ -337,7 +337,7 @@ void CameraNode::preRender(const VertexArrayPtr& pVA, bool bIsParentActive,
         float parentEffectiveOpacity)
 {
     Node::preRender(pVA, bIsParentActive, parentEffectiveOpacity);
-    if (isAutoUpdateCameraImage()) {
+    if (m_bAutoUpdateCameraImage) {
         ScopeTimer Timer(CameraFetchImage);
         updateToLatestCameraImage();
     }
@@ -346,8 +346,7 @@ void CameraNode::preRender(const VertexArrayPtr& pVA, bool bIsParentActive,
             ScopeTimer Timer(CameraDownloadProfilingZone);
             m_FrameNum++;
             GLContextManager::get()->scheduleTexUpload(m_pTex, m_pCurBmp);
-            getCanvas()->scheduleFXRender(
-                    dynamic_pointer_cast<RasterNode>(shared_from_this()));
+            scheduleFXRender();
             m_bNewBmp = false;
         } else if (m_bNewSurface) {
             BitmapPtr pBmp;
@@ -359,18 +358,12 @@ void CameraNode::preRender(const VertexArrayPtr& pVA, bool bIsParentActive,
                 FilterFill<Pixel8>(0).applyInPlace(pBmp);
             } 
             GLContextManager::get()->scheduleTexUpload(m_pTex, pBmp);
-            getCanvas()->scheduleFXRender(
-                    dynamic_pointer_cast<RasterNode>(shared_from_this()));
+            scheduleFXRender();
         }
         m_bNewSurface = false;
     }
 
     calcVertexArray(pVA);
-}
-
-void CameraNode::renderFX()
-{
-    RasterNode::renderFX(getSize(), Pixel32(255, 255, 255, 255), false);
 }
 
 static ProfilingZoneID CameraProfilingZone("Camera::render");
@@ -379,7 +372,7 @@ void CameraNode::render()
 {
     if (m_bIsPlaying) {
         ScopeTimer Timer(CameraProfilingZone);
-        blt32(getTransform(), getSize(), getEffectiveOpacity(), getBlendMode());
+        blt32();
     }
 }
 
@@ -400,20 +393,14 @@ void CameraNode::updateToLatestCameraImage()
 
 void CameraNode::updateCameraImage()
 {
-    if (!isAutoUpdateCameraImage()) {
+    if (!m_bAutoUpdateCameraImage) {
         m_pCurBmp = m_pCamera->getImage(false);
-        blt32(getTransform(), getSize(), getEffectiveOpacity(), getBlendMode());
     }
-}
-
-bool CameraNode::isAutoUpdateCameraImage() const
-{
-    return m_bIsAutoUpdateCameraImage;
 }
 
 void CameraNode::setAutoUpdateCameraImage(bool bVal)
 {
-    m_bIsAutoUpdateCameraImage = bVal;
+    m_bAutoUpdateCameraImage = bVal;
 }
 
 bool CameraNode::isImageAvailable() const

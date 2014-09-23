@@ -354,6 +354,13 @@ Player & Canvas
             is the total amount used by all programs. Only available when using NVidia
             drivers.
 
+        .. py:method:: getMemoryUsage() -> int
+
+            Returns the amount of memory used by the application in bytes. More
+            precisely, this function returns the resident set size of the process
+            in bytes. This does not include shared libraries or memory paged out to
+            disk.
+
         .. py:method:: getVideoRefreshRate() -> float
 
             Returns the current hardware video refresh rate in number of
@@ -491,7 +498,7 @@ Player & Canvas
             Antialiasing) off. Good values are dependent on the graphics driver and 
             the performance of the graphics card.
 
-        .. py:method:: setOGLOptions(usePOW2Textures, useShaders, usePixelBuffers, multiSampleSamples)
+        .. py:method:: setOGLOptions(usePOW2Textures, usePixelBuffers, multiSampleSamples, shaderUsage=AUTO, useDebugContext=False)
 
             Determines which OpenGL extensions to check for and use if possible.
             This method is mainly used for debugging purposes while developing libavg, 
@@ -507,18 +514,11 @@ Player & Canvas
             
                 If :py:const:`True`, restricts textures to power-of-two dimensions.
 
-            :param bool useShaders: 
-            
-                If :py:const:`True`, shaders are used to render effects,
-                do masking and do color space conversions. If :py:const:`False`, video
-                color space conversion is done on the CPU and effects as well as masking
-                are turned off.
-                
             :param bool usePixelBuffers: 
                 
                 If :py:const:`False`, disables the use of OpenGL pixel buffer objects.
 
-            :param int MultiSampleSamples: 
+            :param int multiSampleSamples: 
             
                 The number of samples per pixel to compute.
                 This costs performance and smoothes the edges of polygons. A value of
@@ -526,6 +526,19 @@ Player & Canvas
                 Antialiasing) off. Good values are dependent on the graphics driver and 
                 the performance of the graphics card.
 
+            :param shaderUsage: 
+            
+                Either :py:const:`FULL`, :py:const:`MINIMAL` or :py:const:`AUTO`. 
+                :py:const:`MINIMAL` restricts shader usage to a subset that doesn't use
+                much GPU power.
+
+            :param useDebugContext:
+
+                Uses an OpenGL Debug Context for rendering if the graphics driver supports
+                it. This causes more verbose error messages and warnings in the case of
+                OpenGL errors.
+                
+                
         .. py:method:: setOnFrameHandler(pyfunc) -> int
 
             Sets a python callable object that should be executed once per frame.
