@@ -48,7 +48,8 @@
 typedef int socklen_t;
 
 
-static void SockaddrFromIpEndpointName( struct sockaddr_in& sockAddr, const IpEndpointName& endpoint )
+static void SockaddrFromIpEndpointName( struct sockaddr_in& sockAddr, 
+                                        const IpEndpointName& endpoint )
 {
     memset( (char *)&sockAddr, 0, sizeof(sockAddr ) );
     sockAddr.sin_family = AF_INET;
@@ -117,7 +118,8 @@ public:
         struct sockaddr_in connectSockAddr;
         SockaddrFromIpEndpointName( connectSockAddr, remoteEndpoint );
        
-        if (connect(socket_, (struct sockaddr *)&connectSockAddr, sizeof(connectSockAddr)) < 0) {
+        if (connect(socket_, (struct sockaddr *)&connectSockAddr,
+                    sizeof(connectSockAddr)) < 0) {
             throw std::runtime_error("unable to connect udp socket\n");
         }
 
@@ -133,7 +135,8 @@ public:
         if( isConnected_ ){
             // reconnect to the connected address
             
-            if (connect(socket_, (struct sockaddr *)&connectedAddr_, sizeof(connectedAddr_)) < 0) {
+            if (connect(socket_, (struct sockaddr *)&connectedAddr_, 
+                        sizeof(connectedAddr_)) < 0) {
                 throw std::runtime_error("unable to connect udp socket\n");
             }
 
@@ -143,8 +146,9 @@ public:
             struct sockaddr_in unconnectSockAddr;
             SockaddrFromIpEndpointName( unconnectSockAddr, IpEndpointName() );
 
-            if( connect(socket_, (struct sockaddr *)&unconnectSockAddr, sizeof(unconnectSockAddr)) < 0 
-                    && WSAGetLastError() != WSAEADDRNOTAVAIL ){
+            if( connect(socket_, (struct sockaddr *)&unconnectSockAddr, 
+                        sizeof(unconnectSockAddr)) < 0 &&
+                        WSAGetLastError() != WSAEADDRNOTAVAIL ){
                 throw std::runtime_error("unable to un-connect udp socket\n");
             }
         }
@@ -156,7 +160,8 @@ public:
     {
         SockaddrFromIpEndpointName( connectedAddr_, remoteEndpoint );
        
-        if (connect(socket_, (struct sockaddr *)&connectedAddr_, sizeof(connectedAddr_)) < 0) {
+        if (connect(socket_, (struct sockaddr *)&connectedAddr_, 
+                    sizeof(connectedAddr_)) < 0) {
             throw std::runtime_error("unable to connect udp socket\n");
         }
 
@@ -271,7 +276,8 @@ struct AttachedTimerListener{
 
 
 static bool CompareScheduledTimerCalls( 
-        const std::pair< double, AttachedTimerListener > & lhs, const std::pair< double, AttachedTimerListener > & rhs )
+        const std::pair< double, AttachedTimerListener > & lhs, const std::pair< double,
+        AttachedTimerListener > & rhs )
 {
     return lhs.first < rhs.first;
 }
@@ -314,15 +320,18 @@ public:
 
     void AttachSocketListener( UdpSocket *socket, PacketListener *listener )
     {
-        assert( std::find( socketListeners_.begin(), socketListeners_.end(), std::make_pair(listener, socket) ) == socketListeners_.end() );
-        // we don't check that the same socket has been added multiple times, even though this is an error
+        assert( std::find( socketListeners_.begin(), socketListeners_.end(),
+                           std::make_pair(listener, socket) ) == socketListeners_.end() );
+        // we don't check that the same socket has been added multiple times, 
+        // even though this is an error
         socketListeners_.push_back( std::make_pair( listener, socket ) );
     }
 
     void DetachSocketListener( UdpSocket *socket, PacketListener *listener )
     {
         std::vector< std::pair< PacketListener*, UdpSocket* > >::iterator i = 
-                std::find( socketListeners_.begin(), socketListeners_.end(), std::make_pair(listener, socket) );
+                std::find( socketListeners_.begin(), socketListeners_.end(),
+                std::make_pair(listener, socket) );
         assert( i != socketListeners_.end() );
 
         socketListeners_.erase( i );
@@ -330,12 +339,15 @@ public:
 
     void AttachPeriodicTimerListener( int periodMilliseconds, TimerListener *listener )
     {
-        timerListeners_.push_back( AttachedTimerListener( periodMilliseconds, periodMilliseconds, listener ) );
+        timerListeners_.push_back( 
+                AttachedTimerListener( periodMilliseconds, periodMilliseconds, listener ) );
     }
 
-    void AttachPeriodicTimerListener( int initialDelayMilliseconds, int periodMilliseconds, TimerListener *listener )
+    void AttachPeriodicTimerListener( int initialDelayMilliseconds, 
+									  int periodMilliseconds, TimerListener *listener )
     {
-        timerListeners_.push_back( AttachedTimerListener( initialDelayMilliseconds, periodMilliseconds, listener ) );
+        timerListeners_.push_back( 
+                AttachedTimerListener( initialDelayMilliseconds, periodMilliseconds, listener ) );
     }
 
     void DetachPeriodicTimerListener( TimerListener *listener )
@@ -363,17 +375,19 @@ public:
         std::vector<HANDLE> events( socketListeners_.size() + 1, 0 );
         int j=0;
         for( std::vector< std::pair< PacketListener*, UdpSocket* > >::iterator i = socketListeners_.begin();
-                i != socketListeners_.end(); ++i, ++j ){
+             i != socketListeners_.end(); ++i, ++j ){
 
             HANDLE event = CreateEvent( NULL, FALSE, FALSE, NULL );
-            WSAEventSelect( i->second->impl_->Socket(), event, FD_READ ); // note that this makes the socket non-blocking which is why we can safely call RecieveFrom() on all sockets below
+            WSAEventSelect( i->second->impl_->Socket(), event, FD_READ ); 
+            // note that the above line makes the socket non-blocking which is why we can
+            // safely call RecieveFrom() on all sockets below
             events[j] = event;
         }
 
-
-        events[ socketListeners_.size() ] = breakEvent_; // last event in the collection is the break event
-
         
+        // last event in the collection is the break event
+        events[ socketListeners_.size() ] = breakEvent_; 
+
         // configure the timer queue
         double currentTimeMs = GetCurrentTimeMs();
 
@@ -400,13 +414,15 @@ public:
                             : 0 );
             }
 
-            DWORD waitResult = WaitForMultipleObjects( (DWORD)socketListeners_.size() + 1, &events[0], FALSE, waitTime );
+            DWORD waitResult = WaitForMultipleObjects( (DWORD)socketListeners_.size() + 1,
+                                                       &events[0], FALSE, waitTime );
             if( break_ )
                 break;
 
             if( waitResult != WAIT_TIMEOUT ){
                 for( int i = waitResult - WAIT_OBJECT_0; i < (int)socketListeners_.size(); ++i ){
-                    int size = socketListeners_[i].second->ReceiveFrom( remoteEndpoint, data, MAX_BUFFER_SIZE );
+                    int size = socketListeners_[i].second->ReceiveFrom( remoteEndpoint, 
+                                                                        data, MAX_BUFFER_SIZE );
                     if( size > 0 ){
                         socketListeners_[i].first->ProcessPacket( data, size, remoteEndpoint );
                         if( break_ )
@@ -439,10 +455,12 @@ public:
         for( std::vector< std::pair< PacketListener*, UdpSocket* > >::iterator i = socketListeners_.begin();
                 i != socketListeners_.end(); ++i, ++j ){
 
-            WSAEventSelect( i->second->impl_->Socket(), events[j], 0 ); // remove association between socket and event
+            // remove association between socket and event
+            WSAEventSelect( i->second->impl_->Socket(), events[j], 0 );
             CloseHandle( events[j] );
             unsigned long enableNonblocking = 0;
-            ioctlsocket( i->second->impl_->Socket(), FIONBIO, &enableNonblocking );  // make the socket blocking again
+            // make the socket blocking again
+            ioctlsocket( i->second->impl_->Socket(), FIONBIO, &enableNonblocking );
         }
     }
 
