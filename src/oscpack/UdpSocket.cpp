@@ -49,7 +49,7 @@ typedef int socklen_t;
 
 
 static void SockaddrFromIpEndpointName( struct sockaddr_in& sockAddr, 
-                                        const IpEndpointName& endpoint )
+        const IpEndpointName& endpoint )
 {
     memset( (char *)&sockAddr, 0, sizeof(sockAddr ) );
     sockAddr.sin_family = AF_INET;
@@ -119,7 +119,7 @@ public:
         SockaddrFromIpEndpointName( connectSockAddr, remoteEndpoint );
        
         if (connect(socket_, (struct sockaddr *)&connectSockAddr,
-                    sizeof(connectSockAddr)) < 0) {
+                sizeof(connectSockAddr)) < 0) {
             throw std::runtime_error("unable to connect udp socket\n");
         }
 
@@ -136,7 +136,7 @@ public:
             // reconnect to the connected address
             
             if (connect(socket_, (struct sockaddr *)&connectedAddr_, 
-                        sizeof(connectedAddr_)) < 0) {
+                    sizeof(connectedAddr_)) < 0) {
                 throw std::runtime_error("unable to connect udp socket\n");
             }
 
@@ -147,8 +147,8 @@ public:
             SockaddrFromIpEndpointName( unconnectSockAddr, IpEndpointName() );
 
             if( connect(socket_, (struct sockaddr *)&unconnectSockAddr, 
-                        sizeof(unconnectSockAddr)) < 0 &&
-                        WSAGetLastError() != WSAEADDRNOTAVAIL ){
+                    sizeof(unconnectSockAddr)) < 0 &&
+                    WSAGetLastError() != WSAEADDRNOTAVAIL ){
                 throw std::runtime_error("unable to un-connect udp socket\n");
             }
         }
@@ -161,7 +161,7 @@ public:
         SockaddrFromIpEndpointName( connectedAddr_, remoteEndpoint );
        
         if (connect(socket_, (struct sockaddr *)&connectedAddr_, 
-                    sizeof(connectedAddr_)) < 0) {
+                sizeof(connectedAddr_)) < 0) {
             throw std::runtime_error("unable to connect udp socket\n");
         }
 
@@ -321,7 +321,7 @@ public:
     void AttachSocketListener( UdpSocket *socket, PacketListener *listener )
     {
         assert( std::find( socketListeners_.begin(), socketListeners_.end(),
-                           std::make_pair(listener, socket) ) == socketListeners_.end() );
+                std::make_pair(listener, socket) ) == socketListeners_.end() );
         // we don't check that the same socket has been added multiple times, 
         // even though this is an error
         socketListeners_.push_back( std::make_pair( listener, socket ) );
@@ -344,7 +344,7 @@ public:
     }
 
     void AttachPeriodicTimerListener( int initialDelayMilliseconds, 
-									  int periodMilliseconds, TimerListener *listener )
+	        int periodMilliseconds, TimerListener *listener )
     {
         timerListeners_.push_back( 
                 AttachedTimerListener( initialDelayMilliseconds, periodMilliseconds, listener ) );
@@ -375,7 +375,7 @@ public:
         std::vector<HANDLE> events( socketListeners_.size() + 1, 0 );
         int j=0;
         for( std::vector< std::pair< PacketListener*, UdpSocket* > >::iterator i = socketListeners_.begin();
-             i != socketListeners_.end(); ++i, ++j ){
+                i != socketListeners_.end(); ++i, ++j ){
 
             HANDLE event = CreateEvent( NULL, FALSE, FALSE, NULL );
             WSAEventSelect( i->second->impl_->Socket(), event, FD_READ ); 
@@ -415,14 +415,14 @@ public:
             }
 
             DWORD waitResult = WaitForMultipleObjects( (DWORD)socketListeners_.size() + 1,
-                                                       &events[0], FALSE, waitTime );
+                    &events[0], FALSE, waitTime );
             if( break_ )
                 break;
 
             if( waitResult != WAIT_TIMEOUT ){
                 for( int i = waitResult - WAIT_OBJECT_0; i < (int)socketListeners_.size(); ++i ){
                     int size = socketListeners_[i].second->ReceiveFrom( remoteEndpoint, 
-                                                                        data, MAX_BUFFER_SIZE );
+                            data, MAX_BUFFER_SIZE );
                     if( size > 0 ){
                         socketListeners_[i].first->ProcessPacket( data, size, remoteEndpoint );
                         if( break_ )
